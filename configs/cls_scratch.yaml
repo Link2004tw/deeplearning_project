@@ -1,0 +1,28 @@
+# Run: python -m src.cli train --task classification --config configs/cls_scratch.yaml
+seed: 42
+
+data:
+  root: data/cub
+  image_size: 128
+  batch_size: 32
+  num_workers: 4
+  val_split: 0.1
+
+model:
+  name: scratch_cnn
+  num_classes: 200
+  dropout: 0.5
+
+train:
+  epochs: 20
+  optimizer: adam
+  lr: 0.001
+  weight_decay: 0.0001
+  scheduler: cosine
+  amp: true
+  subset: null          # int -> limit training images, for fast experiments
+
+tracking:
+  backend: mlflow       # mlflow | wandb | none
+  experiment: cub200-classification
+  run_name: scratch_cnn

@@ -1,0 +1,19 @@
+# Run: python -m src.cli tune --task classification --config configs/tuning_grid.yaml
+search:
+  method: grid
+  seed: 42
+
+space:
+  train.lr: [0.01, 0.001, 0.0001]
+  train.batch_size: [32, 64]
+  train.weight_decay: [0.0, 0.0001, 0.001]
+
+# Reduced budget so grid and random are compared fairly.
+base_config: configs/cls_scratch.yaml
+budget:
+  epochs: 3
+  subset: 4000
+
+tracking:
+  backend: mlflow
+  experiment: cub200-tuning

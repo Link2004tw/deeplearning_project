@@ -1,0 +1,30 @@
+# Run: python -m src.cli train --task classification --config configs/cls_resnet.yaml
+seed: 42
+
+data:
+  root: data/cub
+  image_size: 224
+  batch_size: 32
+  num_workers: 4
+  val_split: 0.1
+
+model:
+  name: resnet50
+  num_classes: 200
+  pretrained: true
+  freeze_backbone: false
+  dropout: 0.2
+
+train:
+  epochs: 15
+  optimizer: adamw
+  lr: 0.0003
+  weight_decay: 0.0001
+  scheduler: cosine
+  amp: true
+  subset: null
+
+tracking:
+  backend: mlflow
+  experiment: cub200-classification
+  run_name: resnet50
