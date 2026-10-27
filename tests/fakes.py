@@ -35,9 +35,7 @@ class FakeLoader:
     def __iter__(self):
         loader = DataLoader(
             self.dataset, batch_size=self.batch_size, shuffle=self.shuffle, 
-            generator=torch.Generator().manuel_seed(
-                self.dataset.generator.initial_seed() if hasattr(self.dataset.generator, 'initial_seed') else 42
-                ))
+            generator=torch.Generator().manual_seed(42))
         for images, labels in loader:
             yield images.float(), labels.long()
 
@@ -47,13 +45,13 @@ class FakeLoader:
 class TinyEncoder(BaseEncoder):
     """Tiny cnn encoder, yarab ostor"""
 
-    def __init__(self, feature_dim: int = 63, in_channels: int = 3):
+    def __init__(self, feature_dim: int = 64, in_channels: int = 3):
         super().__init__()
         self.feature_dim = feature_dim
         self.conv1 = torch.nn.Conv2d(in_channels, 16, kernel_size=3, stride=1, padding=1)
-        self.relu1 = torch.nn.ReLu()
+        self.relu1 = torch.nn.ReLU()
         self.conv2 = torch.nn.Conv2d(16, feature_dim, kernel_size=3, stride=1, padding=1)
-        self.relu2 = torch.nn.ReLu()
+        self.relu2 = torch.nn.ReLU()
         self.pool = torch.nn.AdaptiveAvgPool2d((1, 1))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
