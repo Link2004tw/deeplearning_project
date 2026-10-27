@@ -10,7 +10,7 @@ class BaseEncoder(nn.Module):
         super().__init__()
         self.feature_dim = feature_dim
 
-    def forward(self, x: torch.tensor) -> torch.tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         raise NotImplementedError
 
     def cam_target_layer(self) -> nn.Module:
