@@ -1,5 +1,5 @@
 """FakeLoader and TinyEncoder so evaluation/tuning can be built before real data."""
-import torch 
+import torch
 from torch.utils.data import DataLoader, Dataset
 
 from src.models.encoder import BaseEncoder 
