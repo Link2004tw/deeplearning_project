@@ -34,8 +34,4 @@ python -m src.cli train    --task classification --config configs/cls_scratch.ya
 python -m src.cli evaluate --task classification --checkpoint outputs/checkpoints/<run>/best.pt --split test
 python -m src.cli predict  --task classification --checkpoint <path> --image path/to/bird.jpg [--gradcam]
 python -m src.cli tune     --task classification --config configs/tuning_random.yaml
-```
-
-## Interfaces
-
-See `plan.md` section 3 for the frozen data, model, training, tracking and evaluation contracts.
+``` 
