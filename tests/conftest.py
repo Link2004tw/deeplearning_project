@@ -9,7 +9,7 @@ def fake_loader():
     images = torch.randn(100, 3, 64, 64)
     labels = torch.randint(0, 200, (100, ))
     dataset = TensorDataset(images, labels)
-    return DataLoader(dataset=dataset, batch_size=16, shuffle=false)
+    return DataLoader(dataset=dataset, batch_size=16, shuffle=False)
     
 @pytest.fixture 
 def fake_encoder():

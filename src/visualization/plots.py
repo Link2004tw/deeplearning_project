@@ -41,7 +41,7 @@ def plot_confusion_matrix(
     else:
         class_names_subset = class_names
 
-    fig, ax, = plt.subplot(figsize=figsize)
+    fig, ax, = plt.subplots(figsize=figsize)
 
     sns.heatmap(
         cm, 
@@ -76,7 +76,7 @@ def plot_training_curves(
         figsize: Tuple[int, int] = (12, 4),
         save_path: Optional[str] = None
 )-> plt.Figure: 
-    fig, axes = plt.subplot(1, 2, figsize=figsize)
+    fig, axes = plt.subplots(1, 2, figsize=figsize)
     epochs = range(1, len(history["train_loss"]) +1)
 
     # hena el loss
@@ -97,8 +97,8 @@ def plot_training_curves(
     axes[1].legend()
     axes[1].grid(True, alpha=0.3)
 
-    fig.subtitle(title)
-    plt.tick_layout()
+    fig.suptitle(title)
+    plt.tight_layout()
 
     if save_path:
         fig.savefig(save_path, dpi=200, bbox_inches="tight")

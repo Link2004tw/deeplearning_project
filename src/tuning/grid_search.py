@@ -7,66 +7,72 @@ import numpy as np
 from .search_space import SearchSpace
 from .compare import TrialResult 
 
-class RandomSearcher: 
 
-    def __init__(
-            self,
-            search_space: SearchSpace,
-            tracker: Optional[Any] = None,
-            seed: int = 42
-            ):
-        self.search_space = search_space
-        self.tracker = tracker
-        self.seed = seed
-        self._rng = np.random.default_rng(seed)
+@dataclass
+class GridSearcher:
+    search_space: SearchSpace
+    tracker: Optional[Any] = None 
 
-    def run(
-            self, 
-            base_cfg: Disct[str, Any],
-            build_and_train_fn: Callable[[Dict[str, Any]], Dict[str, float]],
-            n_trials: int,
-            output_dir: str = "outputs/tuning",
-    ) -> List[TrialResult]:
+    def run(self,
+        base_cfg: Dict[str, Any],
+        build_and_train_fn: Callable[[Dict[str, Any]], Dict[str, float]],
+        n_trials: Optional[int] = None,
+        output_dir: str = "outputs/tuning")-> List[TrialResult]:
+
         os.makedirs(output_dir, exist_ok=True)
-        csv_path = os.path.join(output_dir, "random_search_trials.csv")
+        csv_path = os.path.join(output_dir, "grid_search_trials.csv")
+
+        # Initialize CSV with header
         fieldnames = ["trial_id", "search_type", "val_acc", "val_f1", "time_s"] + list(self.search_space.params.keys())
         with open(csv_path, "w", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
 
+        configs = self.search_space.grid_configs()
+        if n_trials is not None:
+            configs = configs[:n_trials]
+
         results = []
-        for trial_id in range(n_trials):
-            trial_params = self.search_space.sample_config(self._rng)
+        for trial_id, trial_params in enumerate(configs):
+            # Merge base config with trial params
             cfg = {**base_cfg, **trial_params}
 
+            # Track trial
             if self.tracker:
-                self.tracker.log_params({**cfg, "search": "random", "trial_id": trial_id})
+                self.tracker.log_params({**cfg, "search": "grid", "trial_id": trial_id})
 
+            # Run training
             start_time = time.time()
-            try: 
+            try:
                 metrics = build_and_train_fn(cfg)
             except Exception as e:
                 metrics = {"val_acc": 0.0, "val_f1": 0.0, "time_s": time.time() - start_time}
                 if self.tracker:
                     self.tracker.log_metrics({"error": str(e)}, step=trial_id)
 
-                elapsed = time.time() - start_time
-                metrics.setdefault("time_s", elapsed)
+            elapsed = time.time() - start_time
+            metrics.setdefault("time_s", elapsed)
 
-                if self.tracker: 
-                    self.tracker.log_metrics(
-                        {**metrics, "search": "random", "trial_id": trial_id},
+            # Log metrics
+            if self.tracker:
+                self.tracker.log_metrics(
+                    {**metrics, "search": "grid", "trial_id": trial_id},
                     step=trial_id
-                    )
+                )
 
-                results.append(TrialResult(trial_id=trial_id,
-                search_type="random",
+            # Record result
+            result = TrialResult(
+                trial_id=trial_id,
+                search_type="grid",
                 params=trial_params,
-                metrics=metrics))
+                metrics=metrics,
+            )
+            results.append(result)
 
-                row = {
+            # Append to CSV immediately (crash-safe)
+            row = {
                 "trial_id": trial_id,
-                "search_type": "random",
+                "search_type": "grid",
                 "val_acc": metrics.get("val_acc", 0.0),
                 "val_f1": metrics.get("val_f1", 0.0),
                 "time_s": metrics.get("time_s", elapsed),
@@ -75,4 +81,5 @@ class RandomSearcher:
             with open(csv_path, "a", newline="") as f:
                 writer = csv.DictWriter(f, fieldnames=fieldnames)
                 writer.writerow(row)
+
         return results

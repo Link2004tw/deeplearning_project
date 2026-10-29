@@ -32,13 +32,19 @@ def compute_metrics(
     else:
         metrics["top5_accuracy"] = None
 
-    macro_prec, weighted_rec, weighted_f1, _ = precision_recall_fscore_support(
+    macro_prec, macro_rec, macro_f1, _ = precision_recall_fscore_support(
+    y_true, y_pred, average="macro", zero_division=0
+)
+    weighted_prec, weighted_rec, weighted_f1, _ = precision_recall_fscore_support(
         y_true, y_pred, average="weighted", zero_division=0
     )
 
     metrics["macro_precision"] = float(macro_prec)
-    metrics["macro_recall"] = float(weighted_rec)
-    metrics["macro_f1"] = float(weighted_f1)
+    metrics["weighted_recall"] = float(weighted_rec)
+    metrics["weighted_f1"] = float(weighted_f1)
+    metrics["weighted_precision"] = float(weighted_prec)
+    metrics["macro_recall"] = float(macro_rec)
+    metrics["macro_f1"] = float(macro_f1)
 
     return metrics
 
