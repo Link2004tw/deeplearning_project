@@ -3,17 +3,20 @@ import pytest
 
 import torch 
 from tests.fakes import FakeLoader, TinyEncoder
-
+from torch.utils.data import DataLoader, TensorDataset
 @pytest.fixture 
 def fake_loader():
-    return FakeLoader(n_samples=512, batch_size=32, n_classes=200, image_size=64, seed=42)
-
+    images = torch.randn(100, 3, 64, 64)
+    labels = torch.randint(0, 200, (100, ))
+    dataset = TensorDataset(images, labels)
+    return DataLoader(dataset=dataset, batch_size=16, shuffle=false)
+    
 @pytest.fixture 
 def fake_encoder():
     return TinyEncoder(feature_dim=64, in_channels=3)
 
 @pytest.fixture 
 def fake_batch():
-    images = torch.randn(8, 3, 64, 64)
-    labels = torch.randint(0, 200, (8, ))
+    images = torch.randn(4, 3, 64, 64)
+    labels = torch.randint(0, 200, (4, ))
     return images, labels
