@@ -6,7 +6,7 @@ venv/
 .env
 
 # datasets and model artifacts
-data/
+data/cub/
 outputs/checkpoints/*
 !outputs/checkpoints/.gitkeep
 outputs/logs/*
