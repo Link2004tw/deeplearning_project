@@ -7,7 +7,7 @@ from src.tuning.random_search import RandomSearcher
 from src.tuning.compare import TrialResult, compare_searchers
 
 
-class DummyTrainner: 
+class DummyTrainer: 
     def __init__(self, seed=42):
         self.rng = np.random.default_rng(seed)
         self.call_count = 0
@@ -30,15 +30,17 @@ class DummyTrainner:
             "val_f1": float(val_f1),
             "time_s": float(self.rng.uniform(10, 30)),
         }
+
+
 def test_search_space_from_yaml(tmp_path):
     yaml_content = """
 lr:
-type: log_uniform
-low: 0.00001
-high: 0.01
+  type: log_uniform
+  low: 0.00001
+  high: 0.01
 batch_size:
-type: categorical
-values: [32, 64]
+  type: categorical
+  values: [32, 64]
 """
     path = tmp_path / "test_space.yaml"
     path.write_text(yaml_content)
@@ -56,16 +58,16 @@ def test_grid_search_generates_all_combinations():
         "batch_size": ParamSpec(ParamType.CATEGORICAL, values=[32, 64]),
     })
     configs = space.grid_configs()
-    assert len(configs) == 4 * 2  # 4 lr values * 2 batch sizes
-    # Check all combinations present
+    assert len(configs) == 4 * 2  # 4 lr values * 2 batch sizes = 8 combinations
     lrs = [c["lr"] for c in configs]
     batches = [c["batch_size"] for c in configs]
-    assert set(lrs) == {0.001, 0.004, 0.007, 0.01}
+    # Each lr appears twice (once per batch_size)
+    unique_lrs = sorted(set(round(lr, 10) for lr in lrs))
+    assert unique_lrs == [0.001, 0.004, 0.007, 0.01]
     assert set(batches) == {32, 64}
 
 
 def test_random_search_reproducible():
-    """Same seed should produce same samples."""
     space = SearchSpace({
         "lr": ParamSpec(ParamType.LOG_UNIFORM, low=1e-5, high=1e-2),
         "batch_size": ParamSpec(ParamType.CATEGORICAL, values=[32, 64]),
@@ -80,7 +82,6 @@ def test_random_search_reproducible():
 
 
 def test_grid_searcher_runs(tmp_path):
-    """GridSearcher executes build_and_train_fn for each config."""
     space = SearchSpace({
         "lr": ParamSpec(ParamType.CATEGORICAL, values=[0.001, 0.01]),
         "batch_size": ParamSpec(ParamType.CATEGORICAL, values=[32]),
@@ -100,7 +101,6 @@ def test_grid_searcher_runs(tmp_path):
 
 
 def test_random_searcher_runs(tmp_path):
-    """RandomSearcher executes build_and_train_fn n_trials times."""
     space = SearchSpace({
         "lr": ParamSpec(ParamType.LOG_UNIFORM, low=1e-4, high=1e-2),
         "batch_size": ParamSpec(ParamType.CATEGORICAL, values=[32, 64]),
@@ -120,8 +120,6 @@ def test_random_searcher_runs(tmp_path):
 
 
 def test_compare_searchers(tmp_path):
-    """Compare function produces outputs."""
-    # Create mock results
     grid_results = [
         TrialResult(0, "grid", {"lr": 0.001}, {"val_acc": 0.7, "val_f1": 0.65, "time_s": 10}),
         TrialResult(1, "grid", {"lr": 0.01}, {"val_acc": 0.8, "val_f1": 0.75, "time_s": 12}),

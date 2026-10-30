@@ -1,10 +1,10 @@
-"""BaseEncoder: forward -> features, feature_dim, cam_target_layer()."""
+"""BaseEncoder stub for classification."""
 
-import torch 
-import torch.nn as nn 
+import torch
+import torch.nn as nn
 
 class BaseEncoder(nn.Module):
-    """Ana hakteb stubb kamelo el ba2i"""
+    """Base encoder interface: forward -> features, feature_dim, cam_target_layer()."""
 
     def __init__(self, feature_dim: int):
         super().__init__()

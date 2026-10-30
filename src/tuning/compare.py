@@ -20,6 +20,7 @@ class TrialResult:
             "trial_id": self.trial_id,
             "search_type": self.search_type,
             "params": self.params,
+            "metrics": self.metrics,
         }
 
 def load_trials(csv_path: str) -> List[TrialResult]:
