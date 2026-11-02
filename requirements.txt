@@ -11,3 +11,4 @@ tqdm>=4.65
 mlflow>=2.9
 pytest>=7.4
 opencv-python>=4.8.0
+datasets>=2.14
