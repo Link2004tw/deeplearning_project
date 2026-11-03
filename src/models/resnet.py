@@ -28,7 +28,7 @@ class ResNetEncoder(BaseEncoder):
         pretrained: bool = True,
         freeze: str = "none",
         unfreeze_last_n: int = 1,
-        freeze_backbone: Optional[bool] = None,
+        unfreeze_blocks: int = 0,
     ):
         if model_name not in _RESNET_BUILDERS:
             raise ValueError(
@@ -53,10 +53,9 @@ class ResNetEncoder(BaseEncoder):
             else nn.Linear(backbone_dim, resolved_dim)
         )
 
-        if freeze_backbone is not None:
-            freeze = "backbone" if freeze_backbone else "none"
         self.freeze = str(freeze).lower()
         self.unfreeze_last_n = int(unfreeze_last_n)
+        self.unfreeze_blocks = int(unfreeze_blocks)
         self._apply_freeze()
 
     def _apply_freeze(self) -> None:
@@ -83,6 +82,16 @@ class ResNetEncoder(BaseEncoder):
                 for param in stage.parameters():
                     param.requires_grad = True
 
+        # Finer control: unfreeze the last N blocks of the final stage (layer4).
+        # Useful for fine-tuning just the top of the backbone while keeping the
+        # rest frozen. Works on top of any freeze mode (default 0 = no change).
+        if self.unfreeze_blocks > 0:
+            layer4 = self.backbone.layer4
+            n = max(0, min(self.unfreeze_blocks, len(layer4)))
+            for block in layer4[len(layer4) - n :] if n else []:
+                for param in block.parameters():
+                    param.requires_grad = True
+
         for param in self.projection.parameters():
             param.requires_grad = True
 
@@ -104,4 +113,14 @@ class ResNetEncoder(BaseEncoder):
         return self.projection(x)
 
     def cam_target_layer(self) -> nn.Module:
-        return self.backbone.layer4[-1]
+        """Return the last convolutional layer for Grad-CAM.
+
+        ResNet's final residual block (layer4[-1]) is not itself a conv layer.
+        Bottleneck blocks (resnet50/101/152) end with conv3; BasicBlock blocks
+        (resnet18/34) end with conv2. Returning the actual conv layer keeps the
+        Grad-CAM hooks on feature maps from the last conv, as required.
+        """
+        last_block = self.backbone.layer4[-1]
+        if hasattr(last_block, "conv3"):
+            return last_block.conv3
+        return last_block.conv2

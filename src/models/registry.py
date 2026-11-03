@@ -55,6 +55,7 @@ def _build_resnet18(
     pretrained: bool = True,
     freeze: str = "none",
     unfreeze_last_n: int = 1,
+    unfreeze_blocks: int = 0,
 ) -> BaseEncoder:
     from .resnet import ResNetEncoder
     return ResNetEncoder(
@@ -63,6 +64,7 @@ def _build_resnet18(
         pretrained=pretrained,
         freeze=freeze,
         unfreeze_last_n=unfreeze_last_n,
+        unfreeze_blocks=unfreeze_blocks,
     )
 
 
@@ -72,6 +74,7 @@ def _build_resnet50(
     pretrained: bool = True,
     freeze: str = "none",
     unfreeze_last_n: int = 1,
+    unfreeze_blocks: int = 0,
 ) -> BaseEncoder:
     from .resnet import ResNetEncoder
     return ResNetEncoder(
@@ -80,6 +83,7 @@ def _build_resnet50(
         pretrained=pretrained,
         freeze=freeze,
         unfreeze_last_n=unfreeze_last_n,
+        unfreeze_blocks=unfreeze_blocks,
     )
 
 

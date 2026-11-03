@@ -22,6 +22,7 @@ model:
     pretrained: true
     freeze: none
     unfreeze_last_n: 1
+    unfreeze_blocks: 0
 
 train:
   run_name: resnet18
