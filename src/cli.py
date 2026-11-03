@@ -50,19 +50,37 @@ def get_tracker(cfg: dict):
 def cmd_train(args):
     cfg = load_config(args.config)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    encoder_name = cfg["model"].get("encoder") or cfg["model"].get("name", "unknown")
+
+    print(f"Config: {args.config}")
+    print(f"Device: {device}")
+    print(f"Encoder: {encoder_name}")
 
     train_loader, val_loader, test_loader, meta = build_dataloaders(cfg["data"])
     num_classes = meta["num_classes"]
     class_names = meta["class_names"]
+    print(
+        f"Train batches: {len(train_loader)} | Val batches: {len(val_loader)} | "
+        f"Test batches: {len(test_loader)} | Classes: {num_classes}"
+    )
 
     model = build_model(cfg, num_classes, device)
 
     tracker = get_tracker(cfg)
     if tracker: 
         tracker.log_params(cfg)
+        run_id = getattr(tracker, "run_id", None)
+        if run_id:
+            print(f"MLflow run_id: {run_id}")
 
     trainer = Trainer(model, train_loader, val_loader, cfg["train"], tracker)
     history = trainer.fit()
+
+    run_name = cfg.get("run_name", cfg["train"].get("run_name", "train"))
+    checkpoint_dir = Path(
+        cfg["train"].get("output_dir", Path("outputs/checkpoints") / run_name)
+    )
+    print(f"Best checkpoint: {checkpoint_dir / 'best.pt'}")
 
     if tracker:
         tracker.finish()
@@ -81,15 +99,27 @@ def cmd_train(args):
         results["y_true"], results["y_pred"], class_names,
         save_path=str(out_dir / f"{cfg.get('run_name', 'train')}_confusion.png")
     )
+    print(f"Training curves: {out_dir / f'{run_name}_curves.png'}")
+    print(f"Validation confusion matrix: {out_dir / f'{run_name}_confusion.png'}")
 
 
 def cmd_evaluate(args):
     cfg = load_config(args.config)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    encoder_name = cfg["model"].get("encoder") or cfg["model"].get("name", "unknown")
+
+    print(f"Config: {args.config}")
+    print(f"Device: {device}")
+    print(f"Encoder: {encoder_name}")
+    print(f"Checkpoint: {args.checkpoint}")
 
     _, _, test_loader, meta = build_dataloaders(cfg["data"])
     class_names = meta["class_names"]
     num_classes = meta["num_classes"]
+    print(
+        f"Test batches: {len(test_loader)} | "
+        f"Test samples: {len(test_loader.dataset)} | Classes: {num_classes}"
+    )
 
     model = build_model(cfg, num_classes, device)
     checkpoint = torch.load(args.checkpoint, map_location=device)
@@ -118,6 +148,7 @@ def cmd_evaluate(args):
         results["y_true"], results["y_pred"], class_names,
         save_path=str(out_dir / "test_confusion.png")
     )
+    print(f"Test confusion matrix: {out_dir / 'test_confusion.png'}")
 
     if args.gradcam:
         target_layer = model.encoder.cam_target_layer()

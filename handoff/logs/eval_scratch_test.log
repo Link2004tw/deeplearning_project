@@ -1,0 +1,61 @@
+python.exe : Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher 
+rate limits and faster downloads.
+At line:1 char:115
++ ... | Out-Null; & ".venv\Scripts\python.exe" -m src.cli evaluate --config ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Warning: You ar...ster downloads.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+C:\Users\faree\Desktop\seniorSem1\deep\project\deeplearning_project\src\cli.py:125: FutureWarning: You are using 
+`torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. 
+It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See 
+https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the 
+default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during 
+unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly 
+allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` 
+for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues 
+related to this experimental feature.
+  checkpoint = torch.load(args.checkpoint, map_location=device)
+Config: configs/cls_scratch.yaml
+Device: cuda
+Encoder: scratch_cnn
+Checkpoint: outputs/checkpoints/scratch_cnn/best.pt
+Test batches: 182 | Test samples: 5794 | Classes: 200
+
+=== Test Set Evaluation ===
+  accuracy: 0.0706
+  top5_accuracy: 0.2420
+  macro_precision: 0.0561
+  weighted_recall: 0.0706
+  weighted_f1: 0.0523
+  weighted_precision: 0.0564
+  macro_recall: 0.0713
+  macro_f1: 0.0523
+
+=== Per-Class Report (Top/Bottom 10) ===
+Best 10:
+                 class       f1  support
+      Baltimore Oriole 0.214286       30
+      Cerulean Warbler 0.197531       30
+     Groove billed Ani 0.195122       30
+      Hooded Merganser 0.191781       30
+       Scarlet Tanager 0.190476       30
+Olive sided Flycatcher 0.188235       30
+Rose breasted Grosbeak 0.177778       30
+    Western Meadowlark 0.176000       30
+Red breasted Merganser 0.174497       30
+          Common Raven 0.170213       30
+
+Worst 10:
+              class  f1  support
+       Pine Warbler 0.0       30
+    Prairie Warbler 0.0       30
+     Myrtle Warbler 0.0       30
+Worm eating Warbler 0.0       29
+      Cedar Waxwing 0.0       30
+Pileated Woodpecker 0.0       30
+      Carolina Wren 0.0       30
+        Bewick Wren 0.0       30
+          Rock Wren 0.0       30
+         Marsh Wren 0.0       30
+Test confusion matrix: outputs\figures\test_confusion.png

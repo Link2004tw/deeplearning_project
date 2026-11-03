@@ -1,0 +1,36 @@
+  saved best checkpoint -> outputs\checkpoints\scratch_cnn\best.pt
+Epoch 001/20 | train loss 5.2683 acc 0.0070 | val loss 5.1644 acc 0.0050 f1 0.0002 | lr 9.94e-04
+  saved best checkpoint -> outputs\checkpoints\scratch_cnn\best.pt
+Epoch 002/20 | train loss 5.1070 acc 0.0145 | val loss 5.0837 acc 0.0083 f1 0.0007 | lr 9.76e-04
+  saved best checkpoint -> outputs\checkpoints\scratch_cnn\best.pt
+Epoch 003/20 | train loss 5.0057 acc 0.0187 | val loss 4.9615 acc 0.0283 f1 0.0107 | lr 9.46e-04
+Epoch 004/20 | train loss 4.9241 acc 0.0180 | val loss 4.9517 acc 0.0183 f1 0.0117 | lr 9.05e-04
+Epoch 005/20 | train loss 4.8615 acc 0.0237 | val loss 4.8157 acc 0.0217 f1 0.0071 | lr 8.54e-04
+Epoch 006/20 | train loss 4.8055 acc 0.0248 | val loss 4.7625 acc 0.0250 f1 0.0110 | lr 7.94e-04
+  saved best checkpoint -> outputs\checkpoints\scratch_cnn\best.pt
+Epoch 007/20 | train loss 4.7304 acc 0.0356 | val loss 4.7216 acc 0.0317 f1 0.0123 | lr 7.27e-04
+  saved best checkpoint -> outputs\checkpoints\scratch_cnn\best.pt
+Epoch 008/20 | train loss 4.6712 acc 0.0356 | val loss 4.6532 acc 0.0333 f1 0.0170 | lr 6.55e-04
+Epoch 009/20 | train loss 4.5893 acc 0.0458 | val loss 4.6080 acc 0.0333 f1 0.0255 | lr 5.78e-04
+  saved best checkpoint -> outputs\checkpoints\scratch_cnn\best.pt
+Epoch 010/20 | train loss 4.5473 acc 0.0458 | val loss 4.5531 acc 0.0500 f1 0.0287 | lr 5.00e-04
+  saved best checkpoint -> outputs\checkpoints\scratch_cnn\best.pt
+Epoch 011/20 | train loss 4.4586 acc 0.0476 | val loss 4.5443 acc 0.0533 f1 0.0343 | lr 4.22e-04
+Epoch 012/20 | train loss 4.4125 acc 0.0539 | val loss 4.4808 acc 0.0483 f1 0.0298 | lr 3.45e-04
+  saved best checkpoint -> outputs\checkpoints\scratch_cnn\best.pt
+Epoch 013/20 | train loss 4.3797 acc 0.0615 | val loss 4.4425 acc 0.0567 f1 0.0375 | lr 2.73e-04
+  saved best checkpoint -> outputs\checkpoints\scratch_cnn\best.pt
+Epoch 014/20 | train loss 4.3314 acc 0.0640 | val loss 4.4023 acc 0.0633 f1 0.0457 | lr 2.06e-04
+Epoch 015/20 | train loss 4.2929 acc 0.0627 | val loss 4.3990 acc 0.0583 f1 0.0420 | lr 1.46e-04
+  saved best checkpoint -> outputs\checkpoints\scratch_cnn\best.pt
+Epoch 016/20 | train loss 4.2506 acc 0.0701 | val loss 4.3565 acc 0.0667 f1 0.0434 | lr 9.55e-05
+  saved best checkpoint -> outputs\checkpoints\scratch_cnn\best.pt
+Epoch 017/20 | train loss 4.2202 acc 0.0717 | val loss 4.3401 acc 0.0717 f1 0.0493 | lr 5.45e-05
+  saved best checkpoint -> outputs\checkpoints\scratch_cnn\best.pt
+Epoch 018/20 | train loss 4.2022 acc 0.0742 | val loss 4.3242 acc 0.0733 f1 0.0505 | lr 2.45e-05
+  saved best checkpoint -> outputs\checkpoints\scratch_cnn\best.pt
+Epoch 019/20 | train loss 4.1850 acc 0.0708 | val loss 4.3197 acc 0.0767 f1 0.0558 | lr 6.16e-06
+Epoch 020/20 | train loss 4.1869 acc 0.0755 | val loss 4.3202 acc 0.0767 f1 0.0559 | lr 0.00e+00
+Best checkpoint: outputs\checkpoints\scratch_cnn\best.pt
+Validation Accuracy: 0.0767
+Validation Macro F1: 0.0559

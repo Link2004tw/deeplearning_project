@@ -9,6 +9,7 @@ import torch.nn as nn
 from sklearn.metrics import f1_score
 from torch.optim.lr_scheduler import CosineAnnealingLR, ReduceLROnPlateau, StepLR
 from torch.utils.data import DataLoader
+from tqdm.auto import tqdm
 
 
 class Trainer:
@@ -51,6 +52,7 @@ class Trainer:
         self.scheduler = self._build_scheduler()
 
         self.use_amp = bool(self.cfg.get("amp", False)) and self.device.type == "cuda"
+        self.show_progress = bool(self.cfg.get("progress", True))
         self.scaler = (
             torch.amp.GradScaler("cuda", enabled=True) if self.use_amp else None
         )
@@ -118,7 +120,13 @@ class Trainer:
         total_correct = 0
         total_samples = 0
 
-        for images, labels in self.train_loader:
+        progress = tqdm(
+            self.train_loader,
+            desc=f"Train {epoch:02d}",
+            leave=False,
+            disable=not self.show_progress,
+        )
+        for images, labels in progress:
             images = images.to(self.device, non_blocking=True)
             labels = labels.to(self.device, non_blocking=True).long().reshape(-1)
 
@@ -139,6 +147,10 @@ class Trainer:
             total_loss += loss.item() * batch_size
             total_correct += (logits.argmax(dim=1) == labels).sum().item()
             total_samples += batch_size
+            progress.set_postfix(
+                loss=f"{total_loss / max(total_samples, 1):.4f}",
+                acc=f"{total_correct / max(total_samples, 1):.4f}",
+            )
 
         total_samples = max(total_samples, 1)
         return {
@@ -154,8 +166,14 @@ class Trainer:
         all_targets: List[torch.Tensor] = []
         all_preds: List[torch.Tensor] = []
 
+        progress = tqdm(
+            self.val_loader,
+            desc="Val",
+            leave=False,
+            disable=not self.show_progress,
+        )
         with torch.no_grad():
-            for images, labels in self.val_loader:
+            for images, labels in progress:
                 images = images.to(self.device, non_blocking=True)
                 labels = labels.to(self.device, non_blocking=True).long().reshape(-1)
 
@@ -169,6 +187,10 @@ class Trainer:
                 total_samples += batch_size
                 all_targets.append(labels.cpu())
                 all_preds.append(logits.argmax(dim=1).cpu())
+                progress.set_postfix(
+                    loss=f"{total_loss / max(total_samples, 1):.4f}",
+                    acc=f"{total_correct / max(total_samples, 1):.4f}",
+                )
 
         total_samples = max(total_samples, 1)
         y_true = torch.cat(all_targets).numpy()
@@ -201,6 +223,7 @@ class Trainer:
         torch.save(payload, self.output_dir / "last.pt")
         if is_best:
             torch.save(payload, self.output_dir / "best.pt")
+            print(f"  saved best checkpoint -> {self.output_dir / 'best.pt'}")
             if self.tracker is not None:
                 self.tracker.log_artifact(str(self.output_dir / "best.pt"))
 
@@ -215,6 +238,11 @@ class Trainer:
         }
 
         epochs_without_improvement = 0
+
+        print(
+            f"Training {self.run_name} on {self.device} for {self.epochs} epoch(s) | "
+            f"AMP={self.use_amp} | output={self.output_dir}"
+        )
 
         for epoch in range(1, self.epochs + 1):
             train_metrics = self._train_epoch(epoch)

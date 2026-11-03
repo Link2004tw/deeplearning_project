@@ -1,11 +1,12 @@
 # Run: python -m src.cli train --config configs/cls_scratch.yaml
+run_name: scratch_cnn
 seed: 42
 
 data:
   root: data/cub
   image_size: 128
   batch_size: 32
-  num_workers: 4
+  num_workers: 0
   val_split: 0.1
   subset: null
   augmentation:

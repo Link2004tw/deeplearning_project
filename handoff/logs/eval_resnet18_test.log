@@ -1,0 +1,61 @@
+python.exe : Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher 
+rate limits and faster downloads.
+At line:1 char:101
++ ... png -Force; & ".venv\Scripts\python.exe" -m src.cli evaluate --config ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Warning: You ar...ster downloads.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+C:\Users\faree\Desktop\seniorSem1\deep\project\deeplearning_project\src\cli.py:125: FutureWarning: You are using 
+`torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. 
+It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See 
+https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the 
+default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during 
+unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly 
+allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` 
+for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues 
+related to this experimental feature.
+  checkpoint = torch.load(args.checkpoint, map_location=device)
+Config: configs/cls_resnet.yaml
+Device: cuda
+Encoder: resnet18
+Checkpoint: outputs/checkpoints/resnet18/best.pt
+Test batches: 363 | Test samples: 5794 | Classes: 200
+
+=== Test Set Evaluation ===
+  accuracy: 0.7149
+  top5_accuracy: 0.9132
+  macro_precision: 0.7256
+  weighted_recall: 0.7149
+  weighted_f1: 0.7147
+  weighted_precision: 0.7253
+  macro_recall: 0.7165
+  macro_f1: 0.7156
+
+=== Per-Class Report (Top/Bottom 10) ===
+Best 10:
+                    class       f1  support
+  White breasted Nuthatch 0.966667       30
+                Green Jay 0.962963       27
+            Heermann Gull 0.952381       30
+          Green Violetear 0.950820       30
+           Summer Tanager 0.949153       30
+         Cerulean Warbler 0.949153       30
+  Red cockaded Woodpecker 0.949153       29
+      Common Yellowthroat 0.949153       30
+       European Goldfinch 0.947368       30
+White breasted Kingfisher 0.935484       30
+
+Worst 10:
+                    class       f1  support
+       Acadian Flycatcher 0.370370       29
+            American Crow 0.347826       30
+             Herring Gull 0.346154       30
+             Elegant Tern 0.339623       30
+       Western Wood Pewee 0.333333       30
+          Pomarine Jaeger 0.333333       30
+Yellow bellied Flycatcher 0.296296       29
+     Glaucous winged Gull 0.285714       29
+                Fish Crow 0.266667       30
+              Common Tern 0.260870       30
+Test confusion matrix: outputs\figures\test_confusion.png

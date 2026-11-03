@@ -1,0 +1,27 @@
+  saved best checkpoint -> outputs\checkpoints\resnet18\best.pt
+Epoch 001/15 | train loss 3.9151 acc 0.1846 | val loss 2.6861 acc 0.3450 f1 0.2961 | lr 2.97e-04
+  saved best checkpoint -> outputs\checkpoints\resnet18\best.pt
+Epoch 002/15 | train loss 2.2433 acc 0.4505 | val loss 2.0857 acc 0.4483 f1 0.4140 | lr 2.87e-04
+  saved best checkpoint -> outputs\checkpoints\resnet18\best.pt
+Epoch 003/15 | train loss 1.5839 acc 0.5921 | val loss 1.7781 acc 0.5200 f1 0.4904 | lr 2.71e-04
+  saved best checkpoint -> outputs\checkpoints\resnet18\best.pt
+Epoch 004/15 | train loss 1.1995 acc 0.6895 | val loss 1.5624 acc 0.5817 f1 0.5591 | lr 2.50e-04
+  saved best checkpoint -> outputs\checkpoints\resnet18\best.pt
+Epoch 005/15 | train loss 0.8940 acc 0.7649 | val loss 1.3569 acc 0.6383 f1 0.6218 | lr 2.25e-04
+Epoch 006/15 | train loss 0.6521 acc 0.8324 | val loss 1.4363 acc 0.6117 f1 0.5927 | lr 1.96e-04
+Epoch 007/15 | train loss 0.5215 acc 0.8713 | val loss 1.4311 acc 0.6317 f1 0.6100 | lr 1.66e-04
+  saved best checkpoint -> outputs\checkpoints\resnet18\best.pt
+Epoch 008/15 | train loss 0.3599 acc 0.9155 | val loss 1.3171 acc 0.6717 f1 0.6524 | lr 1.34e-04
+  saved best checkpoint -> outputs\checkpoints\resnet18\best.pt
+Epoch 009/15 | train loss 0.2682 acc 0.9392 | val loss 1.3007 acc 0.6733 f1 0.6610 | lr 1.04e-04
+  saved best checkpoint -> outputs\checkpoints\resnet18\best.pt
+Epoch 010/15 | train loss 0.1866 acc 0.9668 | val loss 1.2287 acc 0.7117 f1 0.7013 | lr 7.50e-05
+Epoch 011/15 | train loss 0.1413 acc 0.9766 | val loss 1.2069 acc 0.7083 f1 0.6963 | lr 4.96e-05
+Epoch 012/15 | train loss 0.1012 acc 0.9883 | val loss 1.1974 acc 0.7083 f1 0.6977 | lr 2.86e-05
+  saved best checkpoint -> outputs\checkpoints\resnet18\best.pt
+Epoch 013/15 | train loss 0.0863 acc 0.9930 | val loss 1.1969 acc 0.7200 f1 0.7142 | lr 1.30e-05
+Epoch 014/15 | train loss 0.0754 acc 0.9943 | val loss 1.1998 acc 0.7200 f1 0.7145 | lr 3.28e-06
+Epoch 015/15 | train loss 0.0725 acc 0.9948 | val loss 1.1836 acc 0.7167 f1 0.7098 | lr 0.00e+00
+Best checkpoint: outputs\checkpoints\resnet18\best.pt
+Validation Accuracy: 0.7167
+Validation Macro F1: 0.7098

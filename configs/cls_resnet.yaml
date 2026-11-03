@@ -1,11 +1,12 @@
 # Run: python -m src.cli train --config configs/cls_resnet.yaml
+run_name: resnet18
 seed: 42
 
 data:
   root: data/cub
   image_size: 224
-  batch_size: 32
-  num_workers: 4
+  batch_size: 16
+  num_workers: 0
   val_split: 0.1
   subset: null
   augmentation:
