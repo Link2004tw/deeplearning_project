@@ -26,7 +26,11 @@ def load_config(path: str) -> dict:
         return yaml.safe_load(f)
 
 def build_model(config: dict, num_classes: int, device: torch.device):
-    encoder = build_encoder(config["model"]["encoder"], **config["model"].get("encoder_kwargs", {}))
+    model_cfg = config["model"]
+    encoder_name = model_cfg.get("encoder") or model_cfg.get("name")
+    if not encoder_name:
+        raise ValueError("config model section must define 'encoder'")
+    encoder = build_encoder(encoder_name, **model_cfg.get("encoder_kwargs", {}))
     model = ImageClassifier(encoder, num_classes=num_classes)
     return model.to(device)
 

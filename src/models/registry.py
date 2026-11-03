@@ -36,15 +36,51 @@ def build_encoder(name: str, **kwargs) -> BaseEncoder:
 
 # Built-in encoders
 @register_encoder("scratch_cnn")
-def _build_scratch_cnn(feature_dim: int = 512, in_channels: int = 3) -> BaseEncoder:
+def _build_scratch_cnn(
+    feature_dim: int = 512,
+    in_channels: int = 3,
+    dropout: float = 0.3,
+) -> BaseEncoder:
     from .scratch_cnn import ScratchCNN
-    return ScratchCNN(feature_dim=feature_dim, in_channels=in_channels)
+    return ScratchCNN(
+        feature_dim=feature_dim,
+        in_channels=in_channels,
+        dropout=dropout,
+    )
+
+
+@register_encoder("resnet18")
+def _build_resnet18(
+    feature_dim: int | None = None,
+    pretrained: bool = True,
+    freeze: str = "none",
+    unfreeze_last_n: int = 1,
+) -> BaseEncoder:
+    from .resnet import ResNetEncoder
+    return ResNetEncoder(
+        model_name="resnet18",
+        feature_dim=feature_dim,
+        pretrained=pretrained,
+        freeze=freeze,
+        unfreeze_last_n=unfreeze_last_n,
+    )
 
 
 @register_encoder("resnet50")
-def _build_resnet50(feature_dim: int = 2048, pretrained: bool = True) -> BaseEncoder:
+def _build_resnet50(
+    feature_dim: int | None = None,
+    pretrained: bool = True,
+    freeze: str = "none",
+    unfreeze_last_n: int = 1,
+) -> BaseEncoder:
     from .resnet import ResNetEncoder
-    return ResNetEncoder(feature_dim=feature_dim, pretrained=pretrained)
+    return ResNetEncoder(
+        model_name="resnet50",
+        feature_dim=feature_dim,
+        pretrained=pretrained,
+        freeze=freeze,
+        unfreeze_last_n=unfreeze_last_n,
+    )
 
 
 @register_encoder("efficientnet_b0")
