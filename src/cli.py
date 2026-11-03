@@ -31,11 +31,15 @@ def build_model(config: dict, num_classes: int, device: torch.device):
     return model.to(device)
 
 def get_tracker(cfg: dict):
-    backend = cfg.get("tracking", {}).get("backend", "mlflow")
+    tracking = cfg.get("tracking", {}) or {}
+    backend = tracking.get("backend", "mlflow")
+    if str(backend).lower() in {"", "none", "null"}:
+        return None
     if backend == "mlflow":
         return MLflowTracker(
-            experiment_name=cfg["tracking"].get("experiment", "cub200"),
-            run_name=cfg.get("run_name"),
+            experiment_name=tracking.get("experiment", "cub200"),
+            run_name=tracking.get("run_name") or cfg.get("run_name"),
+            tracking_uri=tracking.get("tracking_uri"),
         )
     return None
 

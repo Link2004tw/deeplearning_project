@@ -16,6 +16,8 @@ outputs/figures/*
 outputs/tuning/*
 !outputs/tuning/.gitkeep
 mlruns/
+mlflow.db
+mlflow.db-*
 wandb/
 
 .DS_Store
