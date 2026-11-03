@@ -4,36 +4,36 @@ seed: 42
 
 data:
   root: data/cub
-  image_size: 128
+  image_size: 224
   batch_size: 32
   num_workers: 0
   val_split: 0.1
   subset: null
   augmentation:
-    crop_min_scale: 0.6
+    crop_min_scale: 0.4
     flip_prob: 0.5
-    rotation_deg: 15
-    color_jitter: 0.2
+    rotation_deg: 30
+    color_jitter: 0.3
 
 model:
   encoder: scratch_cnn
   num_classes: 200
   encoder_kwargs:
     feature_dim: 512
-    dropout: 0.5
+    dropout: 0.3
 
 train:
   run_name: scratch_cnn
   output_dir: outputs/checkpoints/scratch_cnn
-  epochs: 20
-  optimizer: adam
-  lr: 0.001
-  weight_decay: 0.0001
+  epochs: 60
+  optimizer: adamw
+  lr: 0.0003
+  weight_decay: 0.001
   scheduler: cosine
   amp: true
   early_stopping:
     monitor: val_acc
-    patience: 5
+    patience: 10
 
 tracking:
   backend: mlflow
