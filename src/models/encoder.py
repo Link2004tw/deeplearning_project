@@ -15,3 +15,7 @@ class BaseEncoder(nn.Module):
 
     def cam_target_layer(self) -> nn.Module:
         raise NotImplementedError
+
+    @property
+    def output_dim(self) -> int:
+        return self.feature_dim
