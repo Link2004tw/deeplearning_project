@@ -1,4 +1,5 @@
 import argparse
+import copy
 import sys
 import torch 
 import yaml 
@@ -31,7 +32,8 @@ def build_model(config: dict, num_classes: int, device: torch.device):
     if not encoder_name:
         raise ValueError("config model section must define 'encoder'")
     encoder = build_encoder(encoder_name, **model_cfg.get("encoder_kwargs", {}))
-    model = ImageClassifier(encoder, num_classes=num_classes)
+    dropout = float(model_cfg.get("dropout", 0.0))
+    model = ImageClassifier(encoder, num_classes=num_classes, dropout=dropout)
     return model.to(device)
 
 def get_tracker(cfg: dict):
@@ -46,6 +48,53 @@ def get_tracker(cfg: dict):
             tracking_uri=tracking.get("tracking_uri"),
         )
     return None
+
+def _deep_merge(base: dict, override: dict) -> dict:
+    """Recursively merge override into base; override wins on conflicts."""
+    result = copy.deepcopy(base)
+    for k, v in override.items():
+        if isinstance(v, dict) and isinstance(result.get(k), dict):
+            result[k] = _deep_merge(result[k], v)
+        else:
+            result[k] = v
+    return result
+
+
+def _train_phase(cfg, train_loader, val_loader, test_loader, meta, device,
+                 phase_idx, total_phases, prev_checkpoint):
+    """Run a single training phase; returns path to its best checkpoint."""
+    phase_name = cfg.get("name", f"phase_{phase_idx + 1}")
+    print(f"\n=== Phase {phase_idx + 1}/{total_phases}: {phase_name} ===")
+
+    num_classes = meta["num_classes"]
+    class_names = meta["class_names"]
+
+    model = build_model(cfg, num_classes, device)
+
+    if prev_checkpoint and Path(prev_checkpoint).exists():
+        ckpt = torch.load(prev_checkpoint, map_location=device)
+        model.load_state_dict(ckpt["model_state_dict"])
+        print(f"  loaded checkpoint: {prev_checkpoint}")
+
+    tracker = get_tracker(cfg)
+    if tracker:
+        tracker.log_params(cfg)
+        run_id = getattr(tracker, "run_id", None)
+        if run_id:
+            print(f"MLflow run_id: {run_id}")
+
+    trainer = Trainer(model, train_loader, val_loader, cfg["train"], tracker)
+    history = trainer.fit()
+
+    run_name = cfg.get("run_name", cfg["train"].get("run_name", "train"))
+    output_dir = Path(
+        cfg["train"].get("output_dir", Path("outputs/checkpoints") / run_name)
+    )
+    checkpoint_path = str(output_dir / "best.pt")
+    print(f"  phase checkpoint: {checkpoint_path}")
+
+    return checkpoint_path
+
 
 def cmd_train(args):
     cfg = load_config(args.config)
@@ -64,42 +113,46 @@ def cmd_train(args):
         f"Test batches: {len(test_loader)} | Classes: {num_classes}"
     )
 
+    phases = cfg.get("phases")
+    checkpoint_path = None
+
+    if phases:
+        for i, phase in enumerate(phases):
+            phase_cfg = _deep_merge(cfg, phase)
+            checkpoint_path = _train_phase(
+                phase_cfg, train_loader, val_loader, test_loader, meta,
+                device, i, len(phases), checkpoint_path
+            )
+    else:
+        checkpoint_path = _train_phase(
+            cfg, train_loader, val_loader, test_loader, meta,
+            device, 0, 1, None
+        )
+
+    # Final evaluation using the last checkpoint
     model = build_model(cfg, num_classes, device)
+    if checkpoint_path and Path(checkpoint_path).exists():
+        ckpt = torch.load(checkpoint_path, map_location=device)
+        model.load_state_dict(ckpt["model_state_dict"])
+        print(f"Loaded final checkpoint: {checkpoint_path}")
 
     tracker = get_tracker(cfg)
-    if tracker: 
-        tracker.log_params(cfg)
-        run_id = getattr(tracker, "run_id", None)
-        if run_id:
-            print(f"MLflow run_id: {run_id}")
-
-    trainer = Trainer(model, train_loader, val_loader, cfg["train"], tracker)
-    history = trainer.fit()
-
-    run_name = cfg.get("run_name", cfg["train"].get("run_name", "train"))
-    checkpoint_dir = Path(
-        cfg["train"].get("output_dir", Path("outputs/checkpoints") / run_name)
-    )
-    print(f"Best checkpoint: {checkpoint_dir / 'best.pt'}")
-
     if tracker:
         tracker.finish()
 
-    results = evaluate_model(model, val_loader, device, class_names)
+    results = evaluate_model(model, val_loader, device, class_names,
+                             tta=bool(cfg.get("tta", False)))
 
     print(f"Validation Accuracy: {results['metrics']['accuracy']:.4f}")
     print(f"Validation Macro F1: {results['metrics']['macro_f1']:.4f}")
 
+    run_name = cfg.get("run_name", cfg["train"].get("run_name", "train"))
     out_dir = Path("outputs/figures")
     out_dir.mkdir(parents=True, exist_ok=True)
-    plot_training_curves(history, title=cfg.get("run_name", "Training")).savefig(
-        out_dir / f"{cfg.get('run_name', 'train')}_curves.png"
-    )
     plot_confusion_matrix(
         results["y_true"], results["y_pred"], class_names,
-        save_path=str(out_dir / f"{cfg.get('run_name', 'train')}_confusion.png")
+        save_path=str(out_dir / f"{run_name}_confusion.png")
     )
-    print(f"Training curves: {out_dir / f'{run_name}_curves.png'}")
     print(f"Validation confusion matrix: {out_dir / f'{run_name}_confusion.png'}")
 
 
@@ -125,7 +178,8 @@ def cmd_evaluate(args):
     checkpoint = torch.load(args.checkpoint, map_location=device)
     model.load_state_dict(checkpoint["model_state_dict"])
 
-    results = evaluate_model(model, test_loader, device, class_names)
+    results = evaluate_model(model, test_loader, device, class_names,
+                             tta=bool(cfg.get("tta", False)))
     metrics = results["metrics"]
 
     print("\n=== Test Set Evaluation ===")

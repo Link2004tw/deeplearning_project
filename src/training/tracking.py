@@ -60,6 +60,8 @@ class MLflowTracker(Tracker):
         if tracking_uri is not None:
             mlflow.set_tracking_uri(tracking_uri)
         mlflow.set_experiment(experiment_name)
+        if self._mlflow.active_run() is not None:
+            self._mlflow.end_run()
         self._run = mlflow.start_run(run_name=run_name, tags=tags)
         self.run_id = self._run.info.run_id
 

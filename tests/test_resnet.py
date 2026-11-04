@@ -15,7 +15,7 @@ def test_resnet18_forward_and_cam_target():
 
     assert features.shape == (2, 512, 2, 2)
     assert output.shape == (2, 512)
-    assert type(encoder.cam_target_layer()).__name__ == "BasicBlock"
+    assert type(encoder.cam_target_layer()).__name__ == "Conv2d"
 
 
 def test_resnet18_projection_matches_feature_dim():
@@ -48,7 +48,7 @@ def test_resnet18_frozen_backbone_backward_compatible_flag():
     encoder = ResNetEncoder(
         model_name="resnet18",
         pretrained=False,
-        freeze_backbone=True,
+        freeze="backbone",
     )
     assert all(not param.requires_grad for param in encoder.backbone.parameters())
 

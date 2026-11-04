@@ -12,6 +12,60 @@ from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 
 
+class _LinearWarmupScheduler:
+    """Linearly warm up each param group's lr from 0 to base_lr over N epochs."""
+
+    def __init__(self, optimizer: torch.optim.Optimizer, base_lrs: List[float], warmup_epochs: int):
+        self.optimizer = optimizer
+        self.base_lrs = list(base_lrs)
+        self.warmup_epochs = max(1, int(warmup_epochs))
+        self.epoch = 0
+
+    def step(self) -> None:
+        self.epoch += 1
+        factor = min(1.0, self.epoch / self.warmup_epochs)
+        for group, base_lr in zip(self.optimizer.param_groups, self.base_lrs):
+            group["lr"] = base_lr * factor
+
+
+def _mixup_data(x: torch.Tensor, y: torch.Tensor, alpha: float):
+    """Return mixed inputs, pairs of targets, and lambda."""
+    if alpha <= 0:
+        return x, y, y, 1.0
+    lam = float(torch.distributions.Beta(alpha, alpha).sample())
+    batch_size = x.size(0)
+    index = torch.randperm(batch_size, device=x.device)
+    mixed_x = lam * x + (1 - lam) * x[index]
+    y_a, y_b = y, y[index]
+    return mixed_x, y_a, y_b, lam
+
+
+def _cutmix_data(x: torch.Tensor, y: torch.Tensor, alpha: float):
+    """Return cutmixed inputs, pairs of targets, and lambda."""
+    if alpha <= 0:
+        return x, y, y, 1.0
+    lam = float(torch.distributions.Beta(alpha, alpha).sample())
+    batch_size, _, h, w = x.size()
+    index = torch.randperm(batch_size, device=x.device)
+    cut_ratio = (1.0 - lam) ** 0.5
+    cut_h, cut_w = int(h * cut_ratio), int(w * cut_ratio)
+    cx = torch.randint(w, (1,), device=x.device).item()
+    cy = torch.randint(h, (1,), device=x.device).item()
+    x1 = max(cx - cut_w // 2, 0)
+    y1 = max(cy - cut_h // 2, 0)
+    x2 = min(cx + cut_w // 2, w)
+    y2 = min(cy + cut_h // 2, h)
+    mixed_x = x.clone()
+    mixed_x[:, :, y1:y2, x1:x2] = x[index][:, :, y1:y2, x1:x2]
+    lam = 1.0 - ((x2 - x1) * (y2 - y1) / (h * w))
+    y_a, y_b = y, y[index]
+    return mixed_x, y_a, y_b, lam
+
+
+def _mixup_criterion(criterion, pred, y_a, y_b, lam):
+    return lam * criterion(pred, y_a) + (1 - lam) * criterion(pred, y_b)
+
+
 class Trainer:
     """Training loop with validation, scheduling, early stopping, and checkpointing."""
 
@@ -47,15 +101,30 @@ class Trainer:
         self.min_delta = float(es_cfg.get("min_delta", 0.0))
         self.min_epochs = int(es_cfg.get("min_epochs", 0))
 
-        self.criterion = nn.CrossEntropyLoss()
+        label_smoothing = float(self.cfg.get("label_smoothing", 0.0))
+        self.criterion = nn.CrossEntropyLoss(label_smoothing=label_smoothing)
+
+        self.discriminative_lr = bool(self.cfg.get("discriminative_lr", False))
+        self.backbone_lr_mult = float(self.cfg.get("backbone_lr_mult", 0.1))
+
+        self.warmup_epochs = int(self.cfg.get("warmup_epochs", 0))
+
         self.optimizer = self._build_optimizer()
         self.scheduler = self._build_scheduler()
+        self._warmup_scheduler = None
+        if self.warmup_epochs > 0 and self.scheduler is not None:
+            base_lrs = [g["lr"] for g in self.optimizer.param_groups]
+            self._warmup_scheduler = _LinearWarmupScheduler(
+                self.optimizer, base_lrs, self.warmup_epochs
+            )
 
         self.use_amp = bool(self.cfg.get("amp", False)) and self.device.type == "cuda"
         self.show_progress = bool(self.cfg.get("progress", True))
         self.scaler = (
             torch.amp.GradScaler("cuda", enabled=True) if self.use_amp else None
         )
+
+        self.grad_clip = float(self.cfg.get("grad_clip", 0.0))
 
         self.best_metric = -math.inf if self.monitor_mode == "max" else math.inf
         self.best_epoch = 0
@@ -66,17 +135,37 @@ class Trainer:
         lr = float(self.cfg.get("lr", 1e-3))
         weight_decay = float(self.cfg.get("weight_decay", 0.0))
 
+        if self.discriminative_lr:
+            backbone_params = []
+            head_params = []
+            for module_name, module in self.model.named_modules():
+                for param_name, param in module.named_parameters(recurse=False):
+                    if not param.requires_grad:
+                        continue
+                    full_name = f"{module_name}.{param_name}" if module_name else param_name
+                    if full_name.startswith("encoder.backbone"):
+                        backbone_params.append(param)
+                    else:
+                        head_params.append(param)
+
+            param_groups = [
+                {"params": head_params, "lr": lr, "weight_decay": weight_decay},
+                {
+                    "params": backbone_params,
+                    "lr": lr * self.backbone_lr_mult,
+                    "weight_decay": weight_decay,
+                },
+            ]
+        else:
+            param_groups = self.model.parameters()
+
         if name == "adam":
-            return torch.optim.Adam(
-                self.model.parameters(), lr=lr, weight_decay=weight_decay
-            )
+            return torch.optim.Adam(param_groups, lr=lr, weight_decay=weight_decay)
         if name == "adamw":
-            return torch.optim.AdamW(
-                self.model.parameters(), lr=lr, weight_decay=weight_decay
-            )
+            return torch.optim.AdamW(param_groups, lr=lr, weight_decay=weight_decay)
         if name == "sgd":
             return torch.optim.SGD(
-                self.model.parameters(),
+                param_groups,
                 lr=lr,
                 weight_decay=weight_decay,
                 momentum=float(self.cfg.get("momentum", 0.9)),
@@ -120,6 +209,9 @@ class Trainer:
         total_correct = 0
         total_samples = 0
 
+        mixup_alpha = float(self.cfg.get("mixup_alpha", 0.0))
+        cutmix_alpha = float(self.cfg.get("cutmix_alpha", 0.0))
+
         progress = tqdm(
             self.train_loader,
             desc=f"Train {epoch:02d}",
@@ -130,22 +222,46 @@ class Trainer:
             images = images.to(self.device, non_blocking=True)
             labels = labels.to(self.device, non_blocking=True).long().reshape(-1)
 
+            use_mixup = mixup_alpha > 0
+            use_cutmix = cutmix_alpha > 0
+            if use_mixup or use_cutmix:
+                if use_cutmix:
+                    images, y_a, y_b, lam = _cutmix_data(images, labels, cutmix_alpha)
+                else:
+                    images, y_a, y_b, lam = _mixup_data(images, labels, mixup_alpha)
+            else:
+                y_a = y_b = labels
+                lam = 1.0
+
             self.optimizer.zero_grad(set_to_none=True)
             with torch.autocast(device_type=self.device.type, enabled=self.use_amp):
                 logits = self.model(images)
-                loss = self.criterion(logits, labels)
+                if lam == 1.0:
+                    loss = self.criterion(logits, labels)
+                else:
+                    loss = _mixup_criterion(self.criterion, logits, y_a, y_b, lam)
 
             if self.scaler is not None:
                 self.scaler.scale(loss).backward()
+                if self.grad_clip > 0:
+                    self.scaler.unscale_(self.optimizer)
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.grad_clip)
                 self.scaler.step(self.optimizer)
                 self.scaler.update()
             else:
                 loss.backward()
+                if self.grad_clip > 0:
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.grad_clip)
                 self.optimizer.step()
 
             batch_size = labels.size(0)
             total_loss += loss.item() * batch_size
-            total_correct += (logits.argmax(dim=1) == labels).sum().item()
+            if lam == 1.0:
+                total_correct += (logits.argmax(dim=1) == labels).sum().item()
+            else:
+                correct_a = (logits.argmax(dim=1) == y_a).sum().item()
+                correct_b = (logits.argmax(dim=1) == y_b).sum().item()
+                total_correct += lam * correct_a + (1 - lam) * correct_b
             total_samples += batch_size
             progress.set_postfix(
                 loss=f"{total_loss / max(total_samples, 1):.4f}",
@@ -254,7 +370,9 @@ class Trainer:
                 else val_metrics["acc"]
             )
 
-            if isinstance(self.scheduler, ReduceLROnPlateau):
+            if self._warmup_scheduler is not None and epoch <= self.warmup_epochs:
+                self._warmup_scheduler.step()
+            elif isinstance(self.scheduler, ReduceLROnPlateau):
                 self.scheduler.step(monitor_value)
             elif self.scheduler is not None:
                 self.scheduler.step()

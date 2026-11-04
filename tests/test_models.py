@@ -19,7 +19,7 @@ def test_classifier_output_shape():
 def test_forward_features_shape():
     model = ScratchCNN(feature_dim=128)
     features = model.forward_features(torch.randn(2, 3, 128, 128))
-    assert features.shape == (2, 256, 8, 8)
+    assert features.shape == (2, 512, 4, 4)
 
 
 def test_cam_target_is_conv():

@@ -80,11 +80,13 @@ def evaluate_model(
         model,
         loader,
         device,
-        class_names: List[str]
+        class_names: List[str],
+        tta: bool = False,
+        tta_transforms: Optional[list] = None,
 ) -> Dict:
     from .predict import predict_all 
     
-    y_true, y_pred, y_prob = predict_all(model, loader, device)
+    y_true, y_pred, y_prob = predict_all(model, loader, device, tta=tta, tta_transforms=tta_transforms)
     metrics = compute_metrics(y_true, y_pred, y_prob, class_names)
     per_class = per_class_report(y_true, y_pred, class_names)
 
