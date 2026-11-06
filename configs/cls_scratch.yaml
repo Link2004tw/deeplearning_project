@@ -27,7 +27,7 @@ train:
   output_dir: outputs/checkpoints/scratch_cnn
   epochs: 60
   optimizer: adamw
-  lr: 0.001
+  lr: 0.0003
   weight_decay: 0.001
   scheduler: cosine
   amp: true
